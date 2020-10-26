@@ -147,6 +147,7 @@
         product.desc = this.goodsInfo.desc;
         product.price = this.goodsInfo.realPrice;
         product.iid = this.iid;
+        product.checked = true;
         this.$store.dispatch("addCart",product)
         console.log(this.$store.state.cartList);
       },

@@ -10,21 +10,21 @@
   export default {
     name: "TabControl",
     props:{
-      titles:{
+      titles:{//标题
         type:Array,
         default(){
           return [];
         }
-      }
-    },
-    data(){
-      return {
-        currentIndex:0,//记录被选中的item
+      },
+      currentIndex:{//当前item
+        type:Number,
+        default(){
+          return 0
+        }
       }
     },
     methods:{
       select(index){
-        this.currentIndex = index;
         this.$emit("itemClick",index);
       }
     }

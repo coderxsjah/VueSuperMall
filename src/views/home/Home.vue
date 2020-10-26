@@ -9,22 +9,28 @@
     <Scroll class="content" :probe-type="3" ref="homeScroll"
             @contentPosition="currentPosition" @pullUpMore="pullUpMore">
       <!--    轮播图-->
-      <HomeSwiper :banners="banners"/>
+      <HomeSwiper :banners="banners" @swiperImageLoad="swiperImageLoad"/>
       <!--    推荐-->
       <HomeRecommondView :recommends="recommends"/>
       <!--    本周流行-->
       <HomeFeatureView/>
       <!--    控制tab-->
-      <TabControl class="home-tab-control" :titles="titles" @itemClick="tabItemClick"/>
+      <TabControl v-show="!topFix" ref="homeTabControl"
+                  :titles="titles" @itemClick="tabItemClick" :current-index="currentIndex"/>
       <!--    商品列表-->
       <GoodsList :goods="goods[currentType].list"/>
     </Scroll>
+<!--    固定时的tabControl-->
+    <TabControl v-show="topFix" class="fix-tab-control"  ref="homeTabControlFix"
+                :titles="titles" @itemClick="tabItemClick" :current-index="currentIndex"/>
+<!--    回到顶部-->
     <BackTop @backtotop="backToTop" v-show="showBackTop"/>
   </div>
 </template>
 
 <script>
   import {getHomeMultidata,getHomeGoods} from "../../network/home";
+  import {debounce} from "../../network/util";
 
   import HomeSwiper from "./childrenComponents/HomeSwiper";
   import HomeRecommondView from "./childrenComponents/HomeRecommondView";
@@ -49,6 +55,10 @@
         },
         currentType:'pop',//当前显示商品列表类型
         showBackTop:false,//显示回到顶部按钮
+        topFix:false,//是否吸顶
+        tapOffTop:0,//tabControl距离顶部的作用
+        currentIndex:0,//tabControl的点击位置
+        saveY:0,//记录离开时的当前页面位置
       }
     },
     components: {
@@ -68,6 +78,25 @@
       this.getHomeGoods('pop');
       this.getHomeGoods('new');
       this.getHomeGoods('sell');
+    },
+    mounted() {
+      //3.监听图片加载完成
+      const refresh = debounce(this.$refs.homeScroll.refresh,300)
+      this.$bus.on("itemImageLoad",()=>{
+        //console.log("home:图片加载完成");
+        refresh();
+      })
+    },
+    activated() {
+      //重新进入页面时，迅速滚动到的离开时的位置
+      //console.log(this.saveY);
+      this.$refs.homeScroll.refresh();
+      this.$refs.homeScroll.scrollTo(0, this.saveY, 0);
+    },
+    deactivated() {
+      //保存当前离开时的位置
+      this.saveY = this.$refs.homeScroll.getScrollY();
+      //console.log(this.saveY);
     },
     methods:{
       //获取首页轮播图数据和推荐数据
@@ -90,6 +119,7 @@
       },
       //tabControl的点击，切换商品列表
       tabItemClick(index){
+        this.currentIndex = index;
         switch (index) {
           case 0:this.currentType = 'pop';break;
           case 1:this.currentType = 'new';break;
@@ -101,10 +131,13 @@
       backToTop(){
         this.$refs.homeScroll.scroll.scrollTo(0,0,500);
       },
-      //显示回到顶部按钮
+      //追踪当前位置
       currentPosition(position){
         //console.log(position);
+        //根据当前位置决定是否显示回到顶部组件
         this.showBackTop = -position.y > 1000? true:false;
+        //根据当前位置决定是否吸顶
+        this.topFix = -position.y > this.tapOffTop - 44 ? true:false;
       },
       //上拉加载更多
       pullUpMore(){
@@ -114,6 +147,12 @@
         setTimeout(()=>{
           this.$refs.homeScroll.finishPullUp()
         },2000)
+      },
+      //轮播图加载完成
+      swiperImageLoad(){
+        //console.log("轮播图加载完成");
+        //获取tabControl距离顶部的位置
+        this.tapOffTop = this.$refs.homeTabControl.$el.offsetTop;
       }
     }
 
@@ -136,10 +175,16 @@
 
     z-index: 9;
   }
-  .home-tab-control{
-    position: sticky;
+  /*.home-tab-control{*/
+  /*  position: sticky;*/
+  /*  top: 44px;*/
+  /*  z-index: 9;*/
+  /*}*/
+  .fix-tab-control{
+    position: fixed;
+    left: 0;
+    right: 0;
     top: 44px;
-    z-index: 9;
   }
   .content{
     height:calc(100% - 49px);

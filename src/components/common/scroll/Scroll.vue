@@ -20,7 +20,7 @@
     },
     data(){
       return {
-        scroll:null,
+        scroll:null,//保存BScroll实例
       }
     },
     mounted() {
@@ -40,17 +40,23 @@
       });
     },
     methods:{
+      //this.$scroll的使用避免了未挂载，先使用
       //封装scrollTo函数
       scrollTo(x,y,time=500){
-        this.scrollTo(x,y,time);
+        this.scroll && this.scroll.scrollTo(x,y,time);
       },
       //完成上拉加载
       finishPullUp(){
-        this.scroll.finishPullUp();
+        this.scroll && this.scroll.finishPullUp();
       },
       //刷新，重新计算可滚动高度。
       refresh(){
-        this.scroll.refresh();
+        console.log("------");
+        this.scroll && this.scroll.refresh();
+      },
+      //获取离开时的位置
+      getScrollY(){
+        return this.scroll.y ? this.scroll.y : 0;
       }
     }
   }

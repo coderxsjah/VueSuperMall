@@ -10,6 +10,7 @@
       <DetailComment ref="comment" :comment="comment"/>
       <GoodsList ref="recommend" :goods="recommends"/>
     </Scroll>
+    <Toast :message="message" :show="showToast"/>
     <DetailBottomBar @addToCart="addToCart" @goToBuy="goToBuy"/>
   </div>
 </template>
@@ -29,10 +30,12 @@
   import DetailComment from "./childrenComponents/DetailComment";
   import GoodsList from "../../components/content/goods/GoodsList";
   import DetailBottomBar from "./childrenComponents/DetailBottomBar";
+  import Toast from "../../components/common/toast/Toast";
 
   export default {
     name: "Detail",
     components: {
+      Toast,
       DetailBottomBar,
       GoodsList,
       DetailComment,
@@ -56,6 +59,8 @@
         paramsTopOff:0,//参数距离顶部位置
         commentTopOff:0,//评论距离顶部位置
         recommendTopOff:0,//推荐距离顶部位置
+        showToast:false,//显示toast
+        message:"",//toast提示消息
       }
     },
     created() {
@@ -148,8 +153,13 @@
         product.price = this.goodsInfo.realPrice;
         product.iid = this.iid;
         product.checked = true;
-        this.$store.dispatch("addCart",product)
-        console.log(this.$store.state.cartList);
+        this.showToast = true;
+        this.$store.dispatch("addCart",product).then(res=>{
+          this.message = res;
+        })
+        setTimeout(()=>{
+          this.showToast = false;
+        },1000)
       },
       //立即购买
       goToBuy(){

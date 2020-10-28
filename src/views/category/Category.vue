@@ -1,141 +1,116 @@
 <template>
   <div id="category">
-    <ul class="category">
-      <li>1</li>
-      <li>2</li>
-      <li>3</li>
-      <li>4</li>
-      <li>5</li>
-      <li>6</li>
-      <li>7</li>
-      <li>8</li>
-      <li>9</li>
-      <li>10</li>
-      <li>11</li>
-      <li>12</li>
-      <li>13</li>
-      <li>14</li>
-      <li>15</li>
-      <li>16</li>
-      <li>17</li>
-      <li>18</li>
-      <li>19</li>
-      <li>20</li>
-      <li>21</li>
-      <li>22</li>
-      <li>23</li>
-      <li>24</li>
-      <li>25</li>
-      <li>26</li>
-      <li>27</li>
-      <li>28</li>
-      <li>29</li>
-      <li>30</li>
-      <li>31</li>
-      <li>32</li>
-      <li>33</li>
-      <li>34</li>
-      <li>35</li>
-      <li>36</li>
-      <li>37</li>
-      <li>38</li>
-      <li>39</li>
-      <li>40</li>
-      <li>41</li>
-      <li>42</li>
-      <li>43</li>
-      <li>44</li>
-      <li>45</li>
-      <li>46</li>
-      <li>47</li>
-      <li>48</li>
-      <li>49</li>
-      <li>50</li>
-      <li>51</li>
-      <li>52</li>
-      <li>53</li>
-      <li>54</li>
-      <li>55</li>
-      <li>56</li>
-      <li>57</li>
-      <li>58</li>
-      <li>59</li>
-      <li>60</li>
-      <li>61</li>
-      <li>62</li>
-      <li>63</li>
-      <li>64</li>
-      <li>65</li>
-      <li>66</li>
-      <li>67</li>
-      <li>68</li>
-      <li>69</li>
-      <li>70</li>
-      <li>71</li>
-      <li>72</li>
-      <li>73</li>
-      <li>74</li>
-      <li>75</li>
-      <li>76</li>
-      <li>77</li>
-      <li>78</li>
-      <li>79</li>
-      <li>80</li>
-      <li>81</li>
-      <li>82</li>
-      <li>83</li>
-      <li>84</li>
-      <li>85</li>
-      <li>86</li>
-      <li>87</li>
-      <li>88</li>
-      <li>89</li>
-      <li>90</li>
-      <li>91</li>
-      <li>92</li>
-      <li>93</li>
-      <li>94</li>
-      <li>95</li>
-      <li>96</li>
-      <li>97</li>
-      <li>98</li>
-      <li>99</li>
-      <li>100</li>
-    </ul>
+<!--    导航区-->
+    <NavBar class="category-nav">
+      <template v-slot:center>
+        <div>商品分类</div>
+      </template>
+    </NavBar>
+<!--    内容区-->
+    <div class="category-main">
+<!--      侧边导航栏-->
+      <div class="left-nav">
+        <Scroll class="left-content" ref="leftNavRef" :probe-type="3" >
+         <CategorySideNav :cate-list="cateList" @selectItem="selectItem"/>
+        </Scroll>
+      </div>
+<!--      商品内容-->
+      <div class="right-goods">
+        <Scroll class="right-content" ref="rightContentRef" :probe-type="3">
+          <GoodsList :goods="subList"/>
+        </Scroll>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-  import BScorll from 'better-scroll';
+  import {getCategory, getSubcategory} from "../../network/category";
+  import NavBar from "../../components/common/navbar/NavBar";
+  import Scroll from "../../components/common/scroll/Scroll";
+  import CategorySideNav from "./categoryChildren/CategorySideNav";
+  import GoodsList from "../../components/content/goods/GoodsList";
+
   export default {
     name: "Category",
-    mounted() {
-      //第一个参数为包装容器el,
-      let BS = new BScorll(document.getElementById("category"),{
-        probeType:2,//监听实时滚动位置
-        click:true,//能否点击
-        pullUpLoad:true,//能否上拉加载更多
-      });
-      //监听实时位置
-      BS.on("scroll",(position)=>{
-        console.log(position);
-      })
-      //监听上拉事件
-      BS.on("pullingUp",()=>{
-        console.log("上拉加载更多！");
-        setTimeout(()=>{
-          BS.finishPullUp()
-        },2000)
-      })
+    components: {
+      GoodsList,
+      CategorySideNav,
+      Scroll,
+      NavBar
+    },
+    data(){
+      return {
+        cateList:[],//分类数据
+        subList:[],//当前分类的子分类数据
+      }
+    },
+    created() {
+      this._getCategory();
+      setTimeout(()=>{
+        this._getSubCategory(0);
+      },300)
+
+    },
+    updated() {
+      this.$refs.leftNavRef.refresh();
+      this.$refs.rightContentRef.refresh();
+    },
+    methods:{
+      //获取分类数据
+      _getCategory(){
+        getCategory().then(res => {
+          //console.log(res);
+          this.cateList = res.data.category.list;
+        })
+      },
+      //获取当前类别的子分类
+      _getSubCategory(index){
+        const maitKey = this.cateList[index].maitKey;
+        getSubcategory(maitKey).then(res => {
+          //console.log(res);
+          this.subList = res.data.list;
+        })
+      },
+      //点击切换内容
+      selectItem(index){
+        // console.log(index);
+        this._getSubCategory(index);
+        this.$refs.rightContentRef.scrollTo(0,0,0);
+      }
     }
   }
 </script>
 
 <style scoped>
  #category{
-   background-color: red;
-   height: 300px;
-   overflow: hidden;
    /*overflow-y: scroll;*/
  }
+  .category-nav{
+    background-color: #ff5777;
+    color: #eee;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+  }
+  .category-main{
+    display: flex;
+    margin-top: 44px;
+
+  }
+  .left-nav{
+    flex: 1;
+    background-color: #ddd;
+    height: calc(100vh - 44px - 49px);
+    overflow: hidden;
+  }
+  .right-goods{
+    flex: 3;
+    height: calc(100vh - 44px - 49px);
+    overflow: hidden;
+  }
+  .left-content,.right-content{
+    height: calc(100vh - 44px - 49px);
+  }
 </style>

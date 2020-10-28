@@ -3,8 +3,8 @@
     <img :src="showImg" alt="" @load="imageLoad">
     <div class="goods-info">
       <p>{{goodsItem.title}}</p>
-      <span class="price">￥ {{goodsItem.price}}</span>
-      <span class="collect">{{goodsItem.cfav}}</span>
+      <span class="price" v-if="goodsItem.price">￥ {{goodsItem.price}}</span>
+      <span class="collect" v-if="goodsItem.cfav">{{goodsItem.cfav}}</span>
     </div>
   </div>
 </template>
